@@ -66,15 +66,6 @@ header{
     color:#555;
 }
 
-.ad-google{
-    background:#e0e0e0;
-    text-align:center;
-    padding:20px;
-    margin-bottom:15px;
-    border-radius:8px;
-    font-size:14px;
-}
-
 .card{
     background:white;
     padding:15px;
@@ -89,31 +80,12 @@ header{
     margin-top:5px;
 }
 
-.anuncio-local{
-    background:#e8f5e9;
-    padding:15px;
-    border-radius:10px;
-    margin:20px 0;
-    text-align:center;
-}
-
-.anuncio-local button{
-    margin-top:10px;
-    background:#25D366;
-    border:none;
-    padding:10px 15px;
-    color:white;
-    border-radius:6px;
-    cursor:pointer;
-}
-
 .highlight{
-    background: #ffeb3b;
-    padding: 0;
-    margin: 0;
-    border-radius: 3px;
+    background:#ffeb3b;
+    padding:0;
+    border-radius:3px;
 }
-  
+
 footer{
     text-align:center;
     padding:20px;
@@ -139,20 +111,7 @@ GUIA JABORANDI
 
 <div class="result-count" id="contador"></div>
 
-<div class="ad-google">
-<!-- COLE AQUI O CÓDIGO DO GOOGLE ADSENSE -->
-Anúncio Google
-</div>
-
 <div id="results"></div>
-
-<div class="anuncio-local">
-<strong>Espaço disponível</strong><br>
-Anuncie aqui seu comércio
-<button onclick="alert('Entre em contato para anunciar!')">
-ANUNCIAR
-</button>
-</div>
 
 </div>
 
@@ -162,7 +121,7 @@ Sobre • Anuncie • Contato
 
 <script>
 
-// ===== NORMALIZAR TEXTO (remove acento) =====
+// ================= NORMALIZAR =================
 function normalizar(texto){
     return texto
         .toLowerCase()
@@ -170,30 +129,17 @@ function normalizar(texto){
         .replace(/[\u0300-\u036f]/g, "");
 }
 
-// ===== DICIONÁRIO DE ABREVIAÇÕES =====
-const sinonimos = {
-    "av": "avenida",
-    "r": "rua",
-    "pca": "praca",
-    "pça": "praca",
-    "dr": "doutor",
-    "jd": "jardim",
-    "vl": "vila"
-};
-
-// ===== DESTACAR TEXTO =====
+// ================= ESCAPAR REGEX =================
 function escaparRegex(texto){
     return texto.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
+// ================= DESTACAR =================
 function destacar(textoOriginal, termoBusca){
 
     if(!termoBusca) return textoOriginal;
 
-    let palavras = termoBusca
-        .toLowerCase()
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
+    let palavras = normalizar(termoBusca)
         .split(" ")
         .filter(p => p.length > 1);
 
@@ -206,9 +152,19 @@ function destacar(textoOriginal, termoBusca){
 
     return resultado;
 }
-}
 
-// ===== DADOS (adicione todos aqui depois) =====
+// ================= SINÔNIMOS =================
+const sinonimos = {
+    "av": "avenida",
+    "r": "rua",
+    "pca": "praca",
+    "pça": "praca",
+    "dr": "doutor",
+    "jd": "jardim",
+    "vl": "vila"
+};
+
+// ================= DADOS (EXEMPLO) =================
 const dados = [
 {logradouro:"Avenida Jaime Nicolau Martins", bairro:"Centro", cep:"14775-021"},
 {logradouro:"Rua 15 de Novembro", bairro:"Centro", cep:"14775-001"},
@@ -217,11 +173,11 @@ const dados = [
 {logradouro:"Rua Luiz Daniel", bairro:"Centro", cep:"14775-011"}
 ];
 
+// ================= RENDER =================
 const resultsDiv = document.getElementById("results");
 const contador = document.getElementById("contador");
 const searchInput = document.getElementById("search");
 
-// ===== RENDER =====
 function render(lista, termoBusca=""){
     resultsDiv.innerHTML="";
     contador.innerHTML = lista.length + " resultado(s) encontrado(s)";
@@ -239,16 +195,16 @@ function render(lista, termoBusca=""){
 
 render(dados);
 
-// ===== BUSCA AVANÇADA =====
+// ================= BUSCA =================
 searchInput.addEventListener("input", function(){
 
     const termoOriginal = this.value.trim();
-    const termoNormalizado = normalizar(termoOriginal);
+    let termoNormalizado = normalizar(termoOriginal);
 
-    let palavras = termoNormalizado.split(" ").filter(p=>p.length>0);
-
-    // substitui abreviações
-    palavras = palavras.map(p => sinonimos[p] || p);
+    let palavras = termoNormalizado
+        .split(" ")
+        .filter(p => p.length > 0)
+        .map(p => sinonimos[p] || p);
 
     const filtrado = dados.filter(item => {
 
@@ -266,4 +222,3 @@ searchInput.addEventListener("input", function(){
 
 </body>
 </html>
-
