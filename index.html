@@ -1,6 +1,15 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-09B2K29XXV"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-09B2K29XXV');
+</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Guia Jaborandi - CEPs</title>
@@ -32,7 +41,7 @@ header{
 
 .search-box{
     display:flex;
-    margin-bottom:15px;
+    margin-bottom:10px;
 }
 
 .search-box input{
@@ -49,7 +58,12 @@ header{
     background:#1565c0;
     color:white;
     border-radius:0 8px 8px 0;
-    cursor:pointer;
+}
+
+.result-count{
+    font-size:14px;
+    margin-bottom:10px;
+    color:#555;
 }
 
 .ad-google{
@@ -93,6 +107,12 @@ header{
     cursor:pointer;
 }
 
+mark{
+    background:yellow;
+    padding:2px 4px;
+    border-radius:4px;
+}
+
 footer{
     text-align:center;
     padding:20px;
@@ -106,15 +126,17 @@ footer{
 
 <header>
 GUIA JABORANDI
-<div class="subtitulo">Informações de Jaborandi/SP</div>
+<div class="subtitulo">CEPs de Jaborandi/SP</div>
 </header>
 
 <div class="container">
 
 <div class="search-box">
-<input type="text" id="search" placeholder="Buscar CEP ou Endereço...">
+<input type="text" id="search" placeholder="Buscar rua, bairro ou CEP...">
 <button>🔎</button>
 </div>
+
+<div class="result-count" id="contador"></div>
 
 <div class="ad-google">
 <!-- COLE AQUI O CÓDIGO DO GOOGLE ADSENSE -->
@@ -124,45 +146,82 @@ Anúncio Google
 <div id="results"></div>
 
 <div class="anuncio-local">
-<strong>Oficina do Celular</strong><br>
-Conserto de Smartphones<br>
-<button onclick="window.location.href='https://wa.me/5517999999999'">
-WHATSAPP
+<strong>Espaço disponível</strong><br>
+Anuncie aqui seu comércio
+<button onclick="alert('Entre em contato para anunciar!')">
+ANUNCIAR
 </button>
 </div>
 
 </div>
 
 <footer>
-Sobre • Bairros • Contato
+Sobre • Anuncie • Contato
 </footer>
 
 <script>
 
+// ===== NORMALIZAR TEXTO (remove acento) =====
+function normalizar(texto){
+    return texto
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "");
+}
+
+// ===== DICIONÁRIO DE ABREVIAÇÕES =====
+const sinonimos = {
+    "av": "avenida",
+    "r": "rua",
+    "pca": "praca",
+    "pça": "praca",
+    "dr": "doutor",
+    "jd": "jardim",
+    "vl": "vila"
+};
+
+// ===== DESTACAR TEXTO =====
+function destacar(textoOriginal, termoBusca){
+    if(!termoBusca) return textoOriginal;
+
+    let palavras = termoBusca.split(" ");
+
+    let resultado = textoOriginal;
+
+    palavras.forEach(p=>{
+        if(p.length > 1){
+            let regex = new RegExp("(" + p + ")", "gi");
+            resultado = resultado.replace(regex, "<mark>$1</mark>");
+        }
+    });
+
+    return resultado;
+}
+
+// ===== DADOS (adicione todos aqui depois) =====
 const dados = [
 {logradouro:"Avenida Jaime Nicolau Martins", bairro:"Centro", cep:"14775-021"},
 {logradouro:"Rua 15 de Novembro", bairro:"Centro", cep:"14775-001"},
 {logradouro:"Rua 7 de Setembro", bairro:"São Benedito", cep:"14775-388"},
-{logradouro:"Rua Luiz Daniel", bairro:"Centro", cep:"14775-011"},
 {logradouro:"Praça São Benedito", bairro:"São Benedito", cep:"14775-376"},
-{logradouro:"Rua Alexandre de Avila Borges", bairro:"Centro", cep:"14775-007"},
-{logradouro:"Rua Antônio Bruno", bairro:"Centro", cep:"14775-017"},
-{logradouro:"Rua Dom José de Matos Pereira", bairro:"Centro", cep:"14775-023"},
-{logradouro:"Rua Elifas Ferreira de Araújo", bairro:"Centro", cep:"14775-025"},
-{logradouro:"Rua Inácio Maximo Diniz Junqueira", bairro:"Centro", cep:"14775-015"}
+{logradouro:"Rua Luiz Daniel", bairro:"Centro", cep:"14775-011"}
 ];
 
 const resultsDiv = document.getElementById("results");
+const contador = document.getElementById("contador");
 const searchInput = document.getElementById("search");
 
-function render(dadosFiltrados){
+// ===== RENDER =====
+function render(lista, termoBusca=""){
     resultsDiv.innerHTML="";
-    dadosFiltrados.forEach(item=>{
+    contador.innerHTML = lista.length + " resultado(s) encontrado(s)";
+
+    lista.forEach(item=>{
         resultsDiv.innerHTML += `
         <div class="card">
-            <strong>${item.logradouro}</strong><br>
-            ${item.bairro}
-            <div class="cep">CEP: ${item.cep}</div>
+            <strong>${destacar(item.logradouro, termoBusca)}</strong><br>
+            ${destacar(item.bairro, termoBusca)}
+            <div class="cep">CEP: ${destacar(item.cep, termoBusca)}</div>
         </div>
         `;
     });
@@ -170,14 +229,27 @@ function render(dadosFiltrados){
 
 render(dados);
 
+// ===== BUSCA AVANÇADA =====
 searchInput.addEventListener("input", function(){
-    const termo = this.value.toLowerCase();
-    const filtrado = dados.filter(item =>
-        item.logradouro.toLowerCase().includes(termo) ||
-        item.bairro.toLowerCase().includes(termo) ||
-        item.cep.includes(termo)
-    );
-    render(filtrado);
+
+    const termoOriginal = this.value.trim();
+    const termoNormalizado = normalizar(termoOriginal);
+
+    let palavras = termoNormalizado.split(" ").filter(p=>p.length>0);
+
+    // substitui abreviações
+    palavras = palavras.map(p => sinonimos[p] || p);
+
+    const filtrado = dados.filter(item => {
+
+        const textoCompleto = normalizar(
+            item.logradouro + " " + item.bairro + " " + item.cep
+        );
+
+        return palavras.every(p => textoCompleto.includes(p));
+    });
+
+    render(filtrado, termoOriginal);
 });
 
 </script>
