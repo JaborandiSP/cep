@@ -49,17 +49,9 @@ header{
 .search-box input{
     flex:1;
     padding:12px;
-    border-radius:8px 0 0 8px;
+    border-radius:8px;
     border:1px solid #ccc;
     font-size:16px;
-}
-
-.search-box button{
-    padding:12px 15px;
-    border:none;
-    background:#1565c0;
-    color:white;
-    border-radius:0 8px 8px 0;
 }
 
 .result-count{
@@ -108,7 +100,6 @@ GUIA JABORANDI
 
 <div class="search-box">
 <input type="text" id="search" placeholder="Buscar rua, bairro ou CEP...">
-<button>🔎</button>
 </div>
 
 <div class="result-count" id="contador"></div>
@@ -123,7 +114,7 @@ Sobre • Anuncie • Contato
 
 <script>
 
-// ================= NORMALIZAR =================
+// ================= NORMALIZAR (remove acento) =================
 function normalizar(texto){
     return texto
         .toLowerCase()
@@ -141,9 +132,9 @@ function destacar(textoOriginal, termoBusca){
 
     if(!termoBusca) return textoOriginal;
 
-    let palavras = normalizar(termoBusca)
+    let palavras = termoBusca
         .split(" ")
-        .filter(p => p.length > 1);
+        .filter(p => p.length > 0);
 
     let resultado = textoOriginal;
 
@@ -154,17 +145,6 @@ function destacar(textoOriginal, termoBusca){
 
     return resultado;
 }
-
-// ================= SINÔNIMOS =================
-const sinonimos = {
-    "av": "avenida",
-    "r": "rua",
-    "pca": "praca",
-    "pça": "praca",
-    "dr": "doutor",
-    "jd": "jardim",
-    "vl": "vila"
-};
 
 // ================= DADOS (EXEMPLO) =================
 const dados = [
@@ -197,16 +177,15 @@ function render(lista, termoBusca=""){
 
 render(dados);
 
-// ================= BUSCA =================
+// ================= BUSCA LITERAL PROGRESSIVA =================
 searchInput.addEventListener("input", function(){
 
     const termoOriginal = this.value.trim();
-    let termoNormalizado = normalizar(termoOriginal);
+    const termoNormalizado = normalizar(termoOriginal);
 
     let palavras = termoNormalizado
         .split(" ")
-        .filter(p => p.length > 0)
-        .map(p => sinonimos[p] || p);
+        .filter(p => p.length > 0);
 
     const filtrado = dados.filter(item => {
 
@@ -224,5 +203,3 @@ searchInput.addEventListener("input", function(){
 
 </body>
 </html>
-
-
