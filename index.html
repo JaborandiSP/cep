@@ -132,45 +132,51 @@ function destacar(textoOriginal, termoBusca){
 
     if(!termoBusca) return textoOriginal;
 
-    let textoNormalizado = normalizar(textoOriginal);
-    let buscaNormalizada = normalizar(termoBusca);
-
-    let palavras = buscaNormalizada
+    const textoNormalizado = normalizar(textoOriginal);
+    const palavras = normalizar(termoBusca)
         .split(" ")
         .filter(p => p.length > 0);
 
-    let resultado = textoOriginal;
+    let marcacoes = [];
 
     palavras.forEach(palavra => {
 
         let inicio = 0;
 
-        while(true){
+        while (true) {
 
             let index = textoNormalizado.indexOf(palavra, inicio);
+            if (index === -1) break;
 
-            if(index === -1) break;
+            marcacoes.push({
+                inicio: index,
+                fim: index + palavra.length
+            });
 
-            let fim = index + palavra.length;
-
-            let antes = resultado.slice(0, index);
-            let meio = resultado.slice(index, fim);
-            let depois = resultado.slice(fim);
-
-            resultado = antes + '<span class="highlight">' + meio + '</span>' + depois;
-
-            // Atualiza texto normalizado também
-            textoNormalizado =
-                normalizar(resultado.replace(/<[^>]*>/g, ""));
-
-            inicio = fim;
+            inicio = index + palavra.length;
         }
-
     });
+
+    if(marcacoes.length === 0) return textoOriginal;
+
+    // Ordena da esquerda para direita
+    marcacoes.sort((a,b)=>a.inicio - b.inicio);
+
+    let resultado = "";
+    let ultimoIndice = 0;
+
+    marcacoes.forEach(m => {
+        resultado += textoOriginal.slice(ultimoIndice, m.inicio);
+        resultado += '<span class="highlight">' +
+                     textoOriginal.slice(m.inicio, m.fim) +
+                     '</span>';
+        ultimoIndice = m.fim;
+    });
+
+    resultado += textoOriginal.slice(ultimoIndice);
 
     return resultado;
 }
-
 // ================= DADOS (EXEMPLO) =================
 const dados = [
 {logradouro:"Avenida Jaime Nicolau Martins", bairro:"Centro", cep:"Jaborandi/SP"},
@@ -366,5 +372,6 @@ searchInput.addEventListener("input", function(){
 
 </body>
 </html>
+
 
 
