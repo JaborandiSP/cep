@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Guia Jaborandi - CEPs</title>
+
+<style>
+body{
+    margin:0;
+    font-family: Arial, Helvetica, sans-serif;
+    background:#f2f2f2;
+}
+
+header{
+    background:#c62828;
+    color:white;
+    padding:15px;
+    text-align:center;
+    font-size:20px;
+    font-weight:bold;
+}
+
+.subtitulo{
+    font-size:14px;
+    font-weight:normal;
+}
+
+.container{
+    padding:15px;
+}
+
+.search-box{
+    display:flex;
+    margin-bottom:15px;
+}
+
+.search-box input{
+    flex:1;
+    padding:12px;
+    border-radius:8px 0 0 8px;
+    border:1px solid #ccc;
+    font-size:16px;
+}
+
+.search-box button{
+    padding:12px 15px;
+    border:none;
+    background:#1565c0;
+    color:white;
+    border-radius:0 8px 8px 0;
+    cursor:pointer;
+}
+
+.ad-google{
+    background:#e0e0e0;
+    text-align:center;
+    padding:20px;
+    margin-bottom:15px;
+    border-radius:8px;
+    font-size:14px;
+}
+
+.card{
+    background:white;
+    padding:15px;
+    border-radius:10px;
+    margin-bottom:12px;
+    box-shadow:0 2px 6px rgba(0,0,0,0.1);
+}
+
+.cep{
+    font-weight:bold;
+    color:#c62828;
+    margin-top:5px;
+}
+
+.anuncio-local{
+    background:#e8f5e9;
+    padding:15px;
+    border-radius:10px;
+    margin:20px 0;
+    text-align:center;
+}
+
+.anuncio-local button{
+    margin-top:10px;
+    background:#25D366;
+    border:none;
+    padding:10px 15px;
+    color:white;
+    border-radius:6px;
+    cursor:pointer;
+}
+
+footer{
+    text-align:center;
+    padding:20px;
+    font-size:14px;
+    background:#eeeeee;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+GUIA JABORANDI
+<div class="subtitulo">Informações de Jaborandi/SP</div>
+</header>
+
+<div class="container">
+
+<div class="search-box">
+<input type="text" id="search" placeholder="Buscar CEP ou Endereço...">
+<button>🔎</button>
+</div>
+
+<div class="ad-google">
+<!-- COLE AQUI O CÓDIGO DO GOOGLE ADSENSE -->
+Anúncio Google
+</div>
+
+<div id="results"></div>
+
+<div class="anuncio-local">
+<strong>Oficina do Celular</strong><br>
+Conserto de Smartphones<br>
+<button onclick="window.location.href='https://wa.me/5517999999999'">
+WHATSAPP
+</button>
+</div>
+
+</div>
+
+<footer>
+Sobre • Bairros • Contato
+</footer>
+
+<script>
+
+const dados = [
+{logradouro:"Avenida Jaime Nicolau Martins", bairro:"Centro", cep:"14775-021"},
+{logradouro:"Rua 15 de Novembro", bairro:"Centro", cep:"14775-001"},
+{logradouro:"Rua 7 de Setembro", bairro:"São Benedito", cep:"14775-388"},
+{logradouro:"Rua Luiz Daniel", bairro:"Centro", cep:"14775-011"},
+{logradouro:"Praça São Benedito", bairro:"São Benedito", cep:"14775-376"},
+{logradouro:"Rua Alexandre de Avila Borges", bairro:"Centro", cep:"14775-007"},
+{logradouro:"Rua Antônio Bruno", bairro:"Centro", cep:"14775-017"},
+{logradouro:"Rua Dom José de Matos Pereira", bairro:"Centro", cep:"14775-023"},
+{logradouro:"Rua Elifas Ferreira de Araújo", bairro:"Centro", cep:"14775-025"},
+{logradouro:"Rua Inácio Maximo Diniz Junqueira", bairro:"Centro", cep:"14775-015"}
+];
+
+const resultsDiv = document.getElementById("results");
+const searchInput = document.getElementById("search");
+
+function render(dadosFiltrados){
+    resultsDiv.innerHTML="";
+    dadosFiltrados.forEach(item=>{
+        resultsDiv.innerHTML += `
+        <div class="card">
+            <strong>${item.logradouro}</strong><br>
+            ${item.bairro}
+            <div class="cep">CEP: ${item.cep}</div>
+        </div>
+        `;
+    });
+}
+
+render(dados);
+
+searchInput.addEventListener("input", function(){
+    const termo = this.value.toLowerCase();
+    const filtrado = dados.filter(item =>
+        item.logradouro.toLowerCase().includes(termo) ||
+        item.bairro.toLowerCase().includes(termo) ||
+        item.cep.includes(termo)
+    );
+    render(filtrado);
+});
+
+</script>
+
+</body>
+</html>
