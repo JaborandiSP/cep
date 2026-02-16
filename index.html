@@ -183,37 +183,30 @@ function destacar(textoOriginal, termoBusca){
 
     palavras.forEach(palavra => {
         let inicio = 0;
-
         while (true) {
             let index = textoNormalizado.indexOf(palavra, inicio);
             if (index === -1) break;
 
-            marcacoes.push({
-                inicio: index,
-                fim: index + palavra.length
-            });
-
+            marcacoes.push({inicio: index, fim: index + palavra.length});
             inicio = index + palavra.length;
         }
     });
 
     if(marcacoes.length === 0) return textoOriginal;
 
-    // Ordena
+    // 🔥 ORDENAR PRIORIDADE MAIOR PRIMEIRO
     marcacoes.sort((a,b) => {
-    if(a.inicio !== b.inicio) return a.inicio - b.inicio;
-    return b.fim - a.fim; // maior primeiro
-});
+        if(a.inicio !== b.inicio) return a.inicio - b.inicio;
+        return b.fim - a.fim;
+    });
 
-    // 🔥 MESCLAR SOBREPOSIÇÕES
+    // 🔥 MERGE DE SOBREPOSIÇÃO
     let mesclado = [];
     let atual = marcacoes[0];
 
-    for(let i = 1; i < marcacoes.length; i++){
+    for(let i=1; i<marcacoes.length; i++){
         let prox = marcacoes[i];
-
         if(prox.inicio <= atual.fim){
-            // Sobreposição → estende o fim
             atual.fim = Math.max(atual.fim, prox.fim);
         } else {
             mesclado.push(atual);
@@ -222,7 +215,7 @@ function destacar(textoOriginal, termoBusca){
     }
     mesclado.push(atual);
 
-    // Montar HTML final
+    // Montar HTML
     let resultado = "";
     let ultimoIndice = 0;
 
@@ -235,7 +228,7 @@ function destacar(textoOriginal, termoBusca){
     resultado += textoOriginal.slice(ultimoIndice);
 
     return resultado;
-}
+                   }
 
 // ================= DADOS (EXEMPLO) =================
 const dados = [
@@ -432,6 +425,7 @@ searchInput.addEventListener("input", function(){
 
 </body>
 </html>
+
 
 
 
