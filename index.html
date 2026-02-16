@@ -169,6 +169,7 @@ function escaparRegex(texto){
 }
 
 // ================= DESTACAR =================
+
 function destacar(textoOriginal, termoBusca){
 
     if(!termoBusca) return textoOriginal;
@@ -181,11 +182,9 @@ function destacar(textoOriginal, termoBusca){
     let marcacoes = [];
 
     palavras.forEach(palavra => {
-
         let inicio = 0;
 
         while (true) {
-
             let index = textoNormalizado.indexOf(palavra, inicio);
             if (index === -1) break;
 
@@ -200,17 +199,33 @@ function destacar(textoOriginal, termoBusca){
 
     if(marcacoes.length === 0) return textoOriginal;
 
-    // Ordena da esquerda para direita
+    // Ordena
     marcacoes.sort((a,b)=>a.inicio - b.inicio);
 
+    // 🔥 MESCLAR SOBREPOSIÇÕES
+    let mesclado = [];
+    let atual = marcacoes[0];
+
+    for(let i = 1; i < marcacoes.length; i++){
+        let prox = marcacoes[i];
+
+        if(prox.inicio <= atual.fim){
+            // Sobreposição → estende o fim
+            atual.fim = Math.max(atual.fim, prox.fim);
+        } else {
+            mesclado.push(atual);
+            atual = prox;
+        }
+    }
+    mesclado.push(atual);
+
+    // Montar HTML final
     let resultado = "";
     let ultimoIndice = 0;
 
-    marcacoes.forEach(m => {
+    mesclado.forEach(m => {
         resultado += textoOriginal.slice(ultimoIndice, m.inicio);
-        resultado += '<span class="highlight">' +
-                     textoOriginal.slice(m.inicio, m.fim) +
-                     '</span>';
+        resultado += `<span class="highlight">${textoOriginal.slice(m.inicio, m.fim)}</span>`;
         ultimoIndice = m.fim;
     });
 
@@ -218,6 +233,7 @@ function destacar(textoOriginal, termoBusca){
 
     return resultado;
 }
+
 // ================= DADOS (EXEMPLO) =================
 const dados = [
 {logradouro:"Avenida Jaime Nicolau Martins", bairro:"Centro", cep:"14775-021"},
@@ -413,6 +429,7 @@ searchInput.addEventListener("input", function(){
 
 </body>
 </html>
+
 
 
 
