@@ -200,7 +200,10 @@ function destacar(textoOriginal, termoBusca){
     if(marcacoes.length === 0) return textoOriginal;
 
     // Ordena
-    marcacoes.sort((a,b)=>a.inicio - b.inicio);
+    marcacoes.sort((a,b) => {
+    if(a.inicio !== b.inicio) return a.inicio - b.inicio;
+    return b.fim - a.fim; // maior primeiro
+});
 
     // 🔥 MESCLAR SOBREPOSIÇÕES
     let mesclado = [];
@@ -429,6 +432,7 @@ searchInput.addEventListener("input", function(){
 
 </body>
 </html>
+
 
 
 
