@@ -6,15 +6,15 @@
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
   gtag('js', new Date());
-
   gtag('config', 'G-09B2K29XXV');
 </script>
+
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6493068451182223"
-     crossorigin="anonymous">
-</script>
+     crossorigin="anonymous"></script>
+
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Guia Jaborandi - CEPs (em fase de testes)</title>
+<title>Guia Jaborandi - CEPs</title>
 
 <style>
 body{
@@ -80,12 +80,40 @@ header{
     border-radius:3px;
 }
 
+/* ===== NOVOS ESTILOS ===== */
+.copy-btn{
+    cursor:pointer;
+    margin-left:8px;
+    font-size:16px;
+}
+
+.copy-btn:hover{
+    color:black;
+}
+
 footer{
     text-align:center;
     padding:20px;
     font-size:14px;
     background:#eeeeee;
 }
+
+#toast{
+    position:fixed;
+    bottom:20px;
+    left:50%;
+    transform:translateX(-50%);
+    background:#333;
+    color:white;
+    padding:10px 16px;
+    border-radius:20px;
+    font-size:14px;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity 0.4s, bottom 0.4s;
+    z-index:9999;
+}
+  
 </style>
 </head>
 
@@ -93,8 +121,10 @@ footer{
 
 <header>
 GUIA JABORANDI
-<div class="subtitulo">CEPs de Jaborandi/SP<br>(em fase de testes)<br>Anunciar, sugestões ou erros<br><a href="https://wa.me/5517997023603" class="btn">Entre em contato via WhatsApp<br>99702-3603</a></div>
-
+<div class="subtitulo">
+CEPs de Jaborandi/SP<br>(em fase de testes)<br>
+<a href="https://wa.me/5517997023603" style="color:white;">Contato WhatsApp: 99702-3603</a>
+</div>
 </header>
 
 <div class="container">
@@ -109,8 +139,8 @@ GUIA JABORANDI
 
 </div>
 
-<footer style="font-size: 0.9em; text-align: center; padding: 10px; color: #555;">
-  Não nos responsabilizamos por eventuais divergências; para informações oficiais, consulte o site dos Correios.
+<footer>
+Não nos responsabilizamos por divergências; consulte os Correios para dados oficiais.
 <p></p>
 <section class="apoio-advogado">
   <h3>Apoiador do projeto</h3>
@@ -155,82 +185,77 @@ GUIA JABORANDI
 
 <script>
 
-// ================= NORMALIZAR (remove acento) =================
+// ================= NORMALIZAR =================
 function normalizar(texto){
-    return texto
-        .toLowerCase()
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "");
-}
-
-// ================= ESCAPAR REGEX =================
-function escaparRegex(texto){
-    return texto.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    return texto.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 }
 
 // ================= DESTACAR =================
-
 function destacar(textoOriginal, termoBusca){
-
     if(!termoBusca) return textoOriginal;
 
     const textoNormalizado = normalizar(textoOriginal);
-    const palavras = normalizar(termoBusca)
-        .split(" ")
-        .filter(p => p.length > 0);
-
+    const palavras = normalizar(termoBusca).split(" ").filter(p => p.length > 0);
     let marcacoes = [];
 
-    palavras.forEach(palavra => {
-        let inicio = 0;
-        while (true) {
-            let index = textoNormalizado.indexOf(palavra, inicio);
-            if (index === -1) break;
-
-            marcacoes.push({inicio: index, fim: index + palavra.length});
-            inicio = index + palavra.length;
+    palavras.forEach(p => {
+        let i = 0;
+        while(true){
+            let idx = textoNormalizado.indexOf(p, i);
+            if(idx === -1) break;
+            marcacoes.push({inicio: idx, fim: idx + p.length});
+            i = idx + p.length;
         }
     });
 
-    if(marcacoes.length === 0) return textoOriginal;
+    if(!marcacoes.length) return textoOriginal;
 
-    // 🔥 ORDENAR PRIORIDADE MAIOR PRIMEIRO
-    marcacoes.sort((a,b) => {
-        if(a.inicio !== b.inicio) return a.inicio - b.inicio;
-        return b.fim - a.fim;
-    });
-
-    // 🔥 MERGE DE SOBREPOSIÇÃO
+    marcacoes.sort((a,b)=>a.inicio-b.inicio || b.fim-a.fim);
     let mesclado = [];
     let atual = marcacoes[0];
 
-    for(let i=1; i<marcacoes.length; i++){
-        let prox = marcacoes[i];
-        if(prox.inicio <= atual.fim){
-            atual.fim = Math.max(atual.fim, prox.fim);
+    for(let i=1;i<marcacoes.length;i++){
+        let p = marcacoes[i];
+        if(p.inicio <= atual.fim){
+            atual.fim = Math.max(atual.fim, p.fim);
         } else {
             mesclado.push(atual);
-            atual = prox;
+            atual = p;
         }
     }
     mesclado.push(atual);
 
-    // Montar HTML
     let resultado = "";
-    let ultimoIndice = 0;
-
-    mesclado.forEach(m => {
-        resultado += textoOriginal.slice(ultimoIndice, m.inicio);
+    let ultimo = 0;
+    mesclado.forEach(m=>{
+        resultado += textoOriginal.slice(ultimo, m.inicio);
         resultado += `<span class="highlight">${textoOriginal.slice(m.inicio, m.fim)}</span>`;
-        ultimoIndice = m.fim;
+        ultimo = m.fim;
     });
-
-    resultado += textoOriginal.slice(ultimoIndice);
-
+    resultado += textoOriginal.slice(ultimo);
     return resultado;
-                   }
+}
 
-// ================= DADOS (EXEMPLO) =================
+// ================= FUNÇÕES EXTRA =================
+function copiarCEP(cep){
+    navigator.clipboard.writeText(cep).then(()=>{
+        mostrarToast("CEP copiado: " + cep);
+    });
+}
+
+function mostrarToast(msg){
+    const toast = document.getElementById("toast");
+    toast.innerText = msg;
+    toast.style.opacity = "1";
+    toast.style.bottom = "40px";
+
+    setTimeout(()=>{
+        toast.style.opacity = "0";
+        toast.style.bottom = "20px";
+    }, 2000); // 2 segundos
+}
+  
+// ================= DADOS =================
 const dados = [
 {logradouro:"Avenida Jaime Nicolau Martins", bairro:"Centro", cep:"14775-021"},
 {logradouro:"Avenida Jaime Nicolau Martins", bairro:"Conjunto Habitacional Luiz Ferreira", cep:"14775-030"},
@@ -387,11 +412,18 @@ function render(lista, termoBusca=""){
     contador.innerHTML = lista.length + " resultado(s) encontrado(s)";
 
     lista.forEach(item=>{
+        const enderecoMapa = encodeURIComponent(item.logradouro + ", " + item.bairro + ", Jaborandi SP");
+
         resultsDiv.innerHTML += `
         <div class="card">
             <strong>${destacar(item.logradouro, termoBusca)}</strong><br>
             ${destacar(item.bairro, termoBusca)}
-            <div class="cep">CEP: ${destacar(item.cep, termoBusca)}</div>
+
+            <div class="cep">
+                CEP: ${destacar(item.cep, termoBusca)}
+                <span class="copy-btn" onclick="copiarCEP('${item.cep}')">📋</span>
+            </div>
+            
         </div>
         `;
     });
@@ -399,43 +431,21 @@ function render(lista, termoBusca=""){
 
 render(dados);
 
-// ================= BUSCA LITERAL PROGRESSIVA =================
+// ================= BUSCA =================
 searchInput.addEventListener("input", function(){
-
     const termoOriginal = this.value.trim();
     const termoNormalizado = normalizar(termoOriginal);
+    let palavras = termoNormalizado.split(" ").filter(p => p.length > 0);
 
-    let palavras = termoNormalizado
-        .split(" ")
-        .filter(p => p.length > 0);
-
-    const filtrado = dados.filter(item => {
-
-        const textoCompleto = normalizar(
-            item.logradouro + " " + item.bairro + " " + item.cep
-        );
-
-        return palavras.every(p => textoCompleto.includes(p));
+    const filtrado = dados.filter(item=>{
+        const texto = normalizar(item.logradouro + " " + item.bairro + " " + item.cep);
+        return palavras.every(p => texto.includes(p));
     });
 
     render(filtrado, termoOriginal);
 });
 
 </script>
-
+<div id="toast"></div>
 </body>
-</html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    </html>
