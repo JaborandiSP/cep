@@ -1,441 +1,53 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-09B2K29XXV"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-
-  gtag('config', 'G-09B2K29XXV');
-</script>
-<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6493068451182223"
-     crossorigin="anonymous">
-</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Guia Jaborandi - CEPs (em fase de testes)</title>
 
-<style>
-body{
-    margin:0;
-    font-family: Arial, Helvetica, sans-serif;
-    background:#f2f2f2;
-}
+<title>Guia Jaborandi CEPs</title>
 
-header{
-    background:#c62828;
-    color:white;
-    padding:15px;
-    text-align:center;
-    font-size:20px;
-    font-weight:bold;
-}
+<link rel="stylesheet" href="style.css">
+<link rel="manifest" href="manifest.json">
 
-.subtitulo{
-    font-size:14px;
-    font-weight:normal;
-}
-
-.container{
-    padding:15px;
-}
-
-.search-box{
-    display:flex;
-    margin-bottom:10px;
-}
-
-.search-box input{
-    flex:1;
-    padding:12px;
-    border-radius:8px;
-    border:1px solid #ccc;
-    font-size:16px;
-}
-
-.result-count{
-    font-size:14px;
-    margin-bottom:10px;
-    color:#555;
-}
-
-.card{
-    background:white;
-    padding:15px;
-    border-radius:10px;
-    margin-bottom:12px;
-    box-shadow:0 2px 6px rgba(0,0,0,0.1);
-}
-
-.cep{
-    font-weight:bold;
-    color:#c62828;
-    margin-top:5px;
-}
-
-.highlight{
-    background:#ffeb3b;
-    padding:0;
-    border-radius:3px;
-}
-
-footer{
-    text-align:center;
-    padding:20px;
-    font-size:14px;
-    background:#eeeeee;
-}
-</style>
 </head>
-
 <body>
 
 <header>
 GUIA JABORANDI
-<div class="subtitulo">CEPs de Jaborandi/SP<br>(em fase de testes)<br>Anunciar, sugestões ou erros<br><a href="https://wa.me/5517997023603" class="btn">Entre em contato via WhatsApp<br>99702-3603</a></div>
-
+<div class="subtitulo">
+CEPs de Jaborandi/SP<br>
+(em fase de testes)
+</div>
 </header>
 
 <div class="container">
 
 <div class="search-box">
 <input type="text" id="search" placeholder="Buscar rua, bairro ou CEP...">
+<div id="autocomplete"></div>
 </div>
 
 <div class="result-count" id="contador"></div>
-
 <div id="results"></div>
 
 </div>
 
-<footer style="font-size: 0.9em; text-align: center; padding: 10px; color: #555;">
-  Não nos responsabilizamos por eventuais divergências; para informações oficiais, consulte o site dos Correios.
-<p></p>
-<section class="apoio-advogado">
-  <h3>Apoiador do projeto</h3>
+<footer>
+Não nos responsabilizamos por divergências. Consulte os Correios.<br><br>
 
-  <p><strong>Paulo Henrique Félix – Advogado</strong></p>
-  <p>OAB/SP 377.734</p>
-  <p>Advocacia e Consultoria Jurídica</p>
-
-  <p>
-    Tel: <a href="tel:+551733471860">(17) 3347-1860</a><br>
-    Cel: <a href="tel:+5517992606726">(17) 99260-6726</a> 
-    (<a href="https://wa.me/5517992606726" target="_blank" rel="noopener">WhatsApp</a>)
-  </p>
-
-  <p>Endereço: Rua 13 de Maio, 708</p>
-</section>
-
-<style>
-  .apoio-advogado {
-    margin-top: 40px;
-    padding-top: 15px;
-    border-top: 1px solid #ddd;
-    font-family: Arial, sans-serif;
-    font-size: 14px;
-    color: #555;
-  }
-  .apoio-advogado h3 {
-    font-size: 14px;
-    font-weight: bold;
-    margin-bottom: 10px;
-    color: #444;
-  }
-  .apoio-advogado a {
-    color: #555;
-    text-decoration: none;
-  }
-  .apoio-advogado a:hover {
-    text-decoration: underline;
-  }
-</style>
+<b>Apoiador:</b><br>
+Paulo Henrique Félix – Advogado<br>
+OAB/SP 377.734<br>
+📞 (17) 3347-1860 | 📱 (17) 99260-6726
 </footer>
 
+<script src="script.js"></script>
+
 <script>
-
-// ================= NORMALIZAR (remove acento) =================
-function normalizar(texto){
-    return texto
-        .toLowerCase()
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "");
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('service-worker.js');
 }
-
-// ================= ESCAPAR REGEX =================
-function escaparRegex(texto){
-    return texto.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
-
-// ================= DESTACAR =================
-
-function destacar(textoOriginal, termoBusca){
-
-    if(!termoBusca) return textoOriginal;
-
-    const textoNormalizado = normalizar(textoOriginal);
-    const palavras = normalizar(termoBusca)
-        .split(" ")
-        .filter(p => p.length > 0);
-
-    let marcacoes = [];
-
-    palavras.forEach(palavra => {
-        let inicio = 0;
-        while (true) {
-            let index = textoNormalizado.indexOf(palavra, inicio);
-            if (index === -1) break;
-
-            marcacoes.push({inicio: index, fim: index + palavra.length});
-            inicio = index + palavra.length;
-        }
-    });
-
-    if(marcacoes.length === 0) return textoOriginal;
-
-    // 🔥 ORDENAR PRIORIDADE MAIOR PRIMEIRO
-    marcacoes.sort((a,b) => {
-        if(a.inicio !== b.inicio) return a.inicio - b.inicio;
-        return b.fim - a.fim;
-    });
-
-    // 🔥 MERGE DE SOBREPOSIÇÃO
-    let mesclado = [];
-    let atual = marcacoes[0];
-
-    for(let i=1; i<marcacoes.length; i++){
-        let prox = marcacoes[i];
-        if(prox.inicio <= atual.fim){
-            atual.fim = Math.max(atual.fim, prox.fim);
-        } else {
-            mesclado.push(atual);
-            atual = prox;
-        }
-    }
-    mesclado.push(atual);
-
-    // Montar HTML
-    let resultado = "";
-    let ultimoIndice = 0;
-
-    mesclado.forEach(m => {
-        resultado += textoOriginal.slice(ultimoIndice, m.inicio);
-        resultado += `<span class="highlight">${textoOriginal.slice(m.inicio, m.fim)}</span>`;
-        ultimoIndice = m.fim;
-    });
-
-    resultado += textoOriginal.slice(ultimoIndice);
-
-    return resultado;
-                   }
-
-// ================= DADOS (EXEMPLO) =================
-const dados = [
-{logradouro:"Avenida Jaime Nicolau Martins", bairro:"Centro", cep:"14775-021"},
-{logradouro:"Avenida Jaime Nicolau Martins", bairro:"Conjunto Habitacional Luiz Ferreira", cep:"14775-030"},
-{logradouro:"Avenida Jaime Nicolau Martins", bairro:"Conjunto Habitacional Noel Dionízio", cep:"14775-410"},
-{logradouro:"Avenida Jaime Nicolau Martins", bairro:"Jardim Palmares", cep:"14775-082"},
-{logradouro:"Avenida Jaime Nicolau Martins", bairro:"São Benedito", cep:"14775-378"},
-{logradouro:"Avenida Jaime Nicolau Martins, 601 AC Jaborandi", bairro:"Centro", cep:"14775-970"},
-{logradouro:"Avenida Jaime Nicolau Martins, 601 Clique e Retire Correios AC Jaborandi Clique e Retire", bairro:"Centro", cep:"14775-959"},
-{logradouro:"Avenida Mastrelo", bairro:"COHAB CRHIS", cep:"14775-354"},
-{logradouro:"Avenida Mastrelo", bairro:"Conjunto Habitacional Noel Dionízio", cep:"14775-400"},
-{logradouro:"Avenida Mastrelo", bairro:"São Benedito", cep:"14775-396"},
-{logradouro:"Praça Orlando Junqueira de Oliveira", bairro:"Centro", cep:"14775-019"},
-{logradouro:"Praça São Benedito", bairro:"São Benedito", cep:"14775-376"},
-{logradouro:"Rua Abrahão Abdala Azura", bairro:"Jaborandi", cep:"14775-130"},
-{logradouro:"Rua Abrão Pinto Neto", bairro:"Conjunto Habitacional Agostinho Bruno", cep:"14775-338"},
-{logradouro:"Rua Abrão Pinto Neto", bairro:"Conjunto Habitacional Antonio Baldo", cep:"14775-284"},
-{logradouro:"Rua Abrão Pinto Neto", bairro:"Conjunto Habitacional Jaborandi B", cep:"14775-306"},
-{logradouro:"Rua Abrão Pinto Neto", bairro:"Residencial Jaborandi I", cep:"14775-264"},
-{logradouro:"Rua Alcides Apparecido Bergami", bairro:"Jardim Primavera", cep:"14775-154"},
-{logradouro:"Rua Alcino Martino Mustafé", bairro:"Conjunto Habitacional Luiz Ferreira", cep:"14775-042"},
-{logradouro:"Rua Alexandre de Avila Borges", bairro:"Centro", cep:"14775-007"},
-{logradouro:"Rua Alexandre de Avila Borges", bairro:"Jaborandi", cep:"14775-140"},
-{logradouro:"Rua Ally de Avila Junqueira", bairro:"Centro", cep:"14775-004"},
-{logradouro:"Rua Ally de Avila Junqueira", bairro:"Conjunto Habitacional Luiz Ferreira", cep:"14775-044"},
-{logradouro:"Rua Angelo Tornelli Sobrinho", bairro:"Conjunto Habitacional José Cardoso Batata", cep:"14775-206"},
-{logradouro:"Rua Antônio Bruno", bairro:"Centro", cep:"14775-017"},
-{logradouro:"Rua Antônio Bruno", bairro:"Jaborandi", cep:"14775-120"},
-{logradouro:"Rua Antônio Bruno", bairro:"São Benedito", cep:"14775-374"},
-{logradouro:"Rua Antônio Luiz de Lima", bairro:"Conjunto Habitacional Professora Mônica Borges Pagliuso", cep:"14775-058"},
-{logradouro:"Rua Antônio Teodoro Nogueira", bairro:"Centro", cep:"14775-005"},
-{logradouro:"Rua Anunciação de Jesus Pinto Neto", bairro:"Conjunto Habitacional Noel Dionízio", cep:"14775-408"},
-{logradouro:"Rua Armando de Andréis", bairro:"Jardim Primavera", cep:"14775-156"},
-{logradouro:"Rua Arthur Augusto de Oliveira", bairro:"Centro", cep:"14775-009"},
-{logradouro:"Rua Arthur Augusto de Oliveira", bairro:"Conjunto Habitacional Professora Mônica Borges Pagliuso", cep:"14775-052"},
-{logradouro:"Rua Arthur Augusto de Oliveira", bairro:"Jaborandi", cep:"14775-138"},
-{logradouro:"Rua Arthur Augusto de Oliveira", bairro:"Jardim Palmares", cep:"14775-070"},
-{logradouro:"Rua Arthur Augusto de Oliveira", bairro:"Jardim Primavera", cep:"14775-152"},
-{logradouro:"Rua Assad Kalil Chabrour", bairro:"Conjunto Habitacional Jaborandi B", cep:"14775-320"},
-{logradouro:"Rua Assad Kalil Chabrour", bairro:"Conjunto Habitacional Nossa Senhora Aparecida", cep:"14775-242"},
-{logradouro:"Rua Assad Kalil Chabrour", bairro:"Conjunto Habitacional Ronan Sales Cardozo", cep:"14775-232"},
-{logradouro:"Rua Atilio Brisigueli", bairro:"COHAB CRHIS", cep:"14775-356"},
-{logradouro:"Rua Atilio Brisigueli", bairro:"Conjunto Habitacional Antonio Baldo", cep:"14775-288"},
-{logradouro:"Rua Atilio Brisigueli", bairro:"Conjunto Habitacional Jaborandi B", cep:"14775-314"},
-{logradouro:"Rua Atilio Brisigueli", bairro:"Residencial Jaborandi I", cep:"14775-268"},
-{logradouro:"Rua Atilio Brisigueli", bairro:"São Benedito", cep:"14775-398"},
-{logradouro:"Rua Benedito Adão", bairro:"COHAB CRHIS", cep:"14775-350"},
-{logradouro:"Rua Benedito Adão", bairro:"Conjunto Habitacional Agostinho Bruno", cep:"14775-342"},
-{logradouro:"Rua Benedito Adão", bairro:"Conjunto Habitacional Jaborandi B", cep:"14775-310"},
-{logradouro:"Rua Carlos Oscar Vaz de Almeida", bairro:"Conjunto Habitacional Agostinho Bruno", cep:"14775-336"},
-{logradouro:"Rua Carlos Oscar Vaz de Almeida", bairro:"Conjunto Habitacional Jaborandi B", cep:"14775-304"},
-{logradouro:"Rua Colina", bairro:"COHAB CRHIS", cep:"14775-360"},
-{logradouro:"Rua Colina", bairro:"Conjunto Habitacional Agostinho Bruno", cep:"14775-330"},
-{logradouro:"Rua Colina", bairro:"Conjunto Habitacional Nossa Senhora Aparecida", cep:"14775-240"},
-{logradouro:"Rua Colina", bairro:"Conjunto Habitacional Ronan Sales Cardozo", cep:"14775-234"},
-{logradouro:"Rua Colina", bairro:"São Benedito", cep:"14775-370"},
-{logradouro:"Rua Deocleciano Fogaça de Souza", bairro:"Conjunto Habitacional Agostinho Bruno", cep:"14775-332"},
-{logradouro:"Rua Deocleciano Fogaça de Souza", bairro:"Conjunto Habitacional Jaborandi B", cep:"14775-300"},
-{logradouro:"Rua Deocleciano Fogaça de Souza", bairro:"Conjunto Habitacional Nossa Senhora Aparecida", cep:"14775-248"},
-{logradouro:"Rua Diamantino Cardozo", bairro:"Conjunto Habitacional Professora Mônica Borges Pagliuso", cep:"14775-060"},
-{logradouro:"Rua do Lago", bairro:"Jaborandi", cep:"14775-126"},
-{logradouro:"Rua Dom José de Matos Pereira", bairro:"Centro", cep:"14775-023"},
-{logradouro:"Rua Dona Maria de Almeida Pinto Neto", bairro:"Nosso Teto", cep:"14775-092"},
-{logradouro:"Rua Doutor Amadeu Pagliuso", bairro:"Centro", cep:"14775-013"},
-{logradouro:"Rua Doutor Amadeu Pagliuso", bairro:"Conjunto Habitacional José Cardoso Batata", cep:"14775-200"},
-{logradouro:"Rua Doutor Amadeu Pagliuso", bairro:"Jaborandi", cep:"14775-134"},
-{logradouro:"Rua Elifas Ferreira de Araújo", bairro:"Centro", cep:"14775-025"},
-{logradouro:"Rua Elifas Ferreira de Araújo", bairro:"Conjunto Habitacional Luiz Ferreira", cep:"14775-032"},
-{logradouro:"Rua Elifas Ferreira de Araújo", bairro:"Conjunto Habitacional Noel Dionízio", cep:"14775-406"},
-{logradouro:"Rua Elifas Ferreira de Araújo", bairro:"Jardim Palmares", cep:"14775-080"},
-{logradouro:"Rua Elifas Ferreira de Araújo", bairro:"São Benedito", cep:"14775-380"},
-{logradouro:"Rua Gabriel Diniz", bairro:"Conjunto Habitacional Agostinho Bruno", cep:"14775-334"},
-{logradouro:"Rua Gabriel Diniz", bairro:"Conjunto Habitacional Antonio Baldo", cep:"14775-282"},
-{logradouro:"Rua Gabriel Diniz", bairro:"Conjunto Habitacional Jaborandi B", cep:"14775-302"},
-{logradouro:"Rua Gabriel Diniz", bairro:"Residencial Jaborandi I", cep:"14775-262"},
-{logradouro:"Rua Gabriel Diniz", bairro:"São Benedito", cep:"14775-390"},
-{logradouro:"Rua Gaspar Pereira dos Santos", bairro:"Jardim Primavera", cep:"14775-158"},
-{logradouro:"Rua General Osório", bairro:"São Benedito", cep:"14775-392"},
-{logradouro:"Rua Idalina Fonseca", bairro:"Jaborandi", cep:"14775-128"},
-{logradouro:"Rua Inácio Maximo Diniz Junqueira", bairro:"Centro", cep:"14775-015"},
-{logradouro:"Rua Inácio Maximo Diniz Junqueira", bairro:"Jaborandi", cep:"14775-124"},
-{logradouro:"Rua Inácio Maximo Diniz Junqueira", bairro:"São Benedito", cep:"14775-372"},
-{logradouro:"Rua Jair Pina", bairro:"Conjunto Habitacional Luiz Ferreira", cep:"14775-038"},
-{logradouro:"Rua José Antônio Diniz Junqueira", bairro:"Centro", cep:"14775-003"},
-{logradouro:"Rua José Antônio Diniz Junqueira", bairro:"Conjunto Habitacional José Cardoso Batata", cep:"14775-208"},
-{logradouro:"Rua José Antônio Diniz Junqueira", bairro:"Conjunto Habitacional Luiz Ferreira", cep:"14775-040"},
-{logradouro:"Rua José Antônio Diniz Junqueira", bairro:"Conjunto Habitacional Ronan Sales Cardozo", cep:"14775-220"},
-{logradouro:"Rua José Brunozi", bairro:"Conjunto Habitacional José Cardoso Batata", cep:"14775-210"},
-{logradouro:"Rua José Ferreira", bairro:"Conjunto Habitacional Ronan Sales Cardozo", cep:"14775-226"},
-{logradouro:"Rua José Luiz Brunozi", bairro:"Conjunto Habitacional Antonio Baldo", cep:"14775-292"},
-{logradouro:"Rua José Luiz Brunozi", bairro:"Residencial Jaborandi I", cep:"14775-274"},
-{logradouro:"Rua José Pires da Silva", bairro:"Conjunto Habitacional Antonio Baldo", cep:"14775-290"},
-{logradouro:"Rua José Pires da Silva", bairro:"Residencial Jaborandi I", cep:"14775-272"},
-{logradouro:"Rua José Rodrigues Vieira", bairro:"Jardim Palmares", cep:"14775-076"},
-{logradouro:"Rua Justino Fazzuoli", bairro:"Centro", cep:"14775-027"},
-{logradouro:"Rua Justino Fazzuoli", bairro:"Conjunto Habitacional Luiz Ferreira", cep:"14775-034"},
-{logradouro:"Rua Justino Fazzuoli", bairro:"Conjunto Habitacional Noel Dionízio", cep:"14775-404"},
-{logradouro:"Rua Justino Fazzuoli", bairro:"Jardim Palmares", cep:"14775-078"},
-{logradouro:"Rua Justino Fazzuoli", bairro:"São Benedito", cep:"14775-382"},
-{logradouro:"Rua Karen Patrícia Domingues Tornelli", bairro:"Conjunto Habitacional Noel Dionízio", cep:"14775-412"},
-{logradouro:"Rua Liberdade", bairro:"COHAB CRHIS", cep:"14775-352"},
-{logradouro:"Rua Liberdade", bairro:"Conjunto Habitacional Antonio Baldo", cep:"14775-286"},
-{logradouro:"Rua Liberdade", bairro:"Conjunto Habitacional Jaborandi B", cep:"14775-312"},
-{logradouro:"Rua Liberdade", bairro:"Residencial Jaborandi I", cep:"14775-266"},
-{logradouro:"Rua Liberdade", bairro:"São Benedito", cep:"14775-394"},
-{logradouro:"Rua Luiz Daniel", bairro:"Centro", cep:"14775-011"},
-{logradouro:"Rua Luiz Daniel", bairro:"Conjunto Habitacional Professora Mônica Borges Pagliuso", cep:"14775-054"},
-{logradouro:"Rua Luiz Daniel", bairro:"Jaborandi", cep:"14775-136"},
-{logradouro:"Rua Luiz Daniel", bairro:"Jardim Palmares", cep:"14775-072"},
-{logradouro:"Rua Luiz Daniel", bairro:"Jardim Primavera", cep:"14775-150"},
-{logradouro:"Rua Luiz Gambarato", bairro:"Conjunto Habitacional Antonio Baldo", cep:"14775-296"},
-{logradouro:"Rua Luiz Gambarato", bairro:"Conjunto Habitacional Jaborandi B", cep:"14775-318"},
-{logradouro:"Rua Luiz Gambarato", bairro:"Conjunto Habitacional Nossa Senhora Aparecida", cep:"14775-244"},
-{logradouro:"Rua Manoel Bento Sobrinho", bairro:"Conjunto Habitacional Ronan Sales Cardozo", cep:"14775-224"},
-{logradouro:"Rua Maria Antonieta Ferreira Salim", bairro:"Conjunto Habitacional Noel Dionízio", cep:"14775-402"},
-{logradouro:"Rua Moacir Sales", bairro:"Conjunto Habitacional Professora Mônica Borges Pagliuso", cep:"14775-056"},
-{logradouro:"Rua Odete Oliveira Vaz de Almeida", bairro:"Jardim Palmares", cep:"14775-074"},
-{logradouro:"Rua Omar Sforcini", bairro:"Conjunto Habitacional Antonio Baldo", cep:"14775-294"},
-{logradouro:"Rua Omar Sforcini", bairro:"Conjunto Habitacional Jaborandi B", cep:"14775-316"},
-{logradouro:"Rua Omar Sforcini", bairro:"Conjunto Habitacional Nossa Senhora Aparecida", cep:"14775-246"},
-{logradouro:"Rua Ribeirão das Palmeiras", bairro:"Conjunto Habitacional José Cardoso Batata", cep:"14775-202"},
-{logradouro:"Rua Rio Pardo", bairro:"Conjunto Habitacional Professora Mônica Borges Pagliuso", cep:"14775-050"},
-{logradouro:"Rua Santo Marçon", bairro:"Conjunto Habitacional Agostinho Bruno", cep:"14775-340"},
-{logradouro:"Rua Santo Marçon", bairro:"Conjunto Habitacional Jaborandi B", cep:"14775-308"},
-{logradouro:"Rua Sargento Carlos Xavier", bairro:"Conjunto Habitacional Ronan Sales Cardozo", cep:"14775-228"},
-{logradouro:"Rua Seis", bairro:"Conjunto Habitacional Ronan Sales Cardozo", cep:"14775-230"},
-{logradouro:"Rua Três", bairro:"Conjunto Habitacional Ronan Sales Cardozo", cep:"14775-222"},
-{logradouro:"Rua Ulisses de Andreis", bairro:"Jaborandi", cep:"14775-142"},
-{logradouro:"Rua Vercina Valéria de Araújo", bairro:"Residencial Jaborandi I", cep:"14775-270"},
-{logradouro:"Rua Vereador Onofre Alves da Costa", bairro:"COHAB CRHIS", cep:"14775-358"},
-{logradouro:"Rua Vereador Onofre Alves da Costa", bairro:"Conjunto Habitacional Jaborandi B", cep:"14775-322"},
-{logradouro:"Rua Victório Gambarato", bairro:"Conjunto Habitacional José Cardoso Batata", cep:"14775-204"},
-{logradouro:"Rua 13 de Maio", bairro:"São Benedito", cep:"14775-386"},
-{logradouro:"Rua 15 de Novembro", bairro:"Centro", cep:"14775-001"},
-{logradouro:"Rua 15 de Novembro", bairro:"Conjunto Habitacional Luiz Ferreira", cep:"14775-036"},
-{logradouro:"Rua 15 de Novembro", bairro:"São Benedito", cep:"14775-384"},
-{logradouro:"Rua 18 de Março", bairro:"Jaborandi", cep:"14775-122"},
-{logradouro:"Rua 18 de Março", bairro:"Nosso Teto", cep:"14775-090"},
-{logradouro:"Rua 7 de Setembro", bairro:"Conjunto Habitacional Antonio Baldo", cep:"14775-280"},
-{logradouro:"Rua 7 de Setembro", bairro:"Conjunto Habitacional Nossa Senhora Aparecida", cep:"14775-250"},
-{logradouro:"Rua 7 de Setembro", bairro:"Conjunto Habitacional Ronan Sales Cardozo", cep:"14775-236"},
-{logradouro:"Rua 7 de Setembro", bairro:"Residencial Jaborandi I", cep:"14775-260"},
-{logradouro:"Rua 7 de Setembro", bairro:"São Benedito", cep:"14775-388"},
-{logradouro:"Travessa Casa dos Meus Sonhos", bairro:"Centro", cep:"14775-026"},
-{logradouro:"Travessa Eliza Ferrari Buzetto", bairro:"Jaborandi", cep:"14775-132"}
-];
-
-// ================= RENDER =================
-const resultsDiv = document.getElementById("results");
-const contador = document.getElementById("contador");
-const searchInput = document.getElementById("search");
-
-function render(lista, termoBusca=""){
-    resultsDiv.innerHTML="";
-    contador.innerHTML = lista.length + " resultado(s) encontrado(s)";
-
-    lista.forEach(item=>{
-        resultsDiv.innerHTML += `
-        <div class="card">
-            <strong>${destacar(item.logradouro, termoBusca)}</strong><br>
-            ${destacar(item.bairro, termoBusca)}
-            <div class="cep">CEP: ${destacar(item.cep, termoBusca)}</div>
-        </div>
-        `;
-    });
-}
-
-render(dados);
-
-// ================= BUSCA LITERAL PROGRESSIVA =================
-searchInput.addEventListener("input", function(){
-
-    const termoOriginal = this.value.trim();
-    const termoNormalizado = normalizar(termoOriginal);
-
-    let palavras = termoNormalizado
-        .split(" ")
-        .filter(p => p.length > 0);
-
-    const filtrado = dados.filter(item => {
-
-        const textoCompleto = normalizar(
-            item.logradouro + " " + item.bairro + " " + item.cep
-        );
-
-        return palavras.every(p => textoCompleto.includes(p));
-    });
-
-    render(filtrado, termoOriginal);
-});
-
 </script>
 
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
